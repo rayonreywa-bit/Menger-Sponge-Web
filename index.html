@@ -3,68 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menger Sponge - Click to Play</title>
+    <title>Menger Sponge - Debug Mode</title>
     <style>
-        body { margin: 0; background-color: #000; color: white; overflow: hidden; font-family: sans-serif; }
+        body { margin: 0; background-color: #000; color: white; overflow: hidden; font-family: monospace; }
         canvas { display: block; width: 100vw; height: 100vh; }
-        
-        /* شاشة البداية */
         #overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); display: flex; flex-direction: column;
+            background: rgba(0,0,0,0.7); display: flex; flex-direction: column;
             align-items: center; justify-content: center; z-index: 100;
         }
-        button {
-            padding: 15px 30px; font-size: 20px; cursor: pointer;
-            background: #4CAF50; color: white; border: none; border-radius: 5px;
+        #console-log {
+            position: absolute; bottom: 0; left: 0; width: 100%; max-height: 200px;
+            background: rgba(0,0,0,0.8); color: #00ff00; overflow-y: auto;
+            font-size: 12px; padding: 10px; pointer-events: none;
         }
-        #error-log { color: #ff5555; margin-top: 20px; padding: 10px; white-space: pre-wrap; }
+        button { padding: 15px 30px; font-size: 20px; cursor: pointer; background: #222; color: #fff; border: 2px solid #555; }
+        .error-text { color: #ff4444; font-weight: bold; }
     </style>
 </head>
 <body>
     <div id="overlay">
-        <h1>Menger Sponge WASM</h1>
-        <button id="start-btn">إضغط هنا للبدء (Click to Start)</button>
-        <div id="error-log"></div>
+        <h2 id="status-title">Menger Sponge WASM</h2>
+        <button id="start-btn">إضغط للتشغيل (Click to Start)</button>
+        <div id="error-display" style="margin-top:20px; text-align:center;"></div>
     </div>
-
+    <div id="console-log">سجل النظام: جاري الانتظار...</div>
     <div id="wasm-example"></div>
 
     <script type="module">
-        import init from './menger_sponge_wgpu.js';
-
+        const logEl = document.getElementById('console-log');
+        const errorDisplay = document.getElementById('error-display');
         const btn = document.getElementById('start-btn');
-        const overlay = document.getElementById('overlay');
-        const errorLog = document.getElementById('error-log');
 
-        btn.onclick = async () => {
-            btn.innerText = "جاري التحميل...";
-            try {
-                // تشغيل المحرك
-                await init();
-                
-                // إخفاء الشاشة بعد النجاح
-                overlay.style.display = 'none';
-                
-                // محاولة إعطاء التركيز للكانفاس فوراً
-                const canvas = document.querySelector('canvas');
-                if (canvas) {
-                    canvas.focus();
-                    console.log("Canvas focused!");
-                }
-            } catch (e) {
-                console.error(e);
-                errorLog.innerText = "❌ خطأ في المحرك:\n" + e.message;
-                btn.innerText = "فشل التشغيل";
-                
-                if (e.message.includes("WebGPU")) {
-                    errorLog.innerText += "\n\n💡 متصفحك أو كرت الشاشة لا يدعم WebGPU حالياً.";
-                }
-            }
+        // تحويل كل رسائل الكونسول لتظهر على الشاشة
+        const oldLog = console.log;
+        const oldError = console.error;
+        console.log = (...args) => { logEl.innerText += "\n" + args.join(" "); oldLog(...args); };
+        console.error = (...args) => { 
+            const msg = args.join(" ");
+            logEl.innerHTML += `\n<span class="error-text">${msg}</span>`;
+            errorDisplay.innerHTML = `<span class="error-text">❌ خطأ: ${msg.substring(0, 100)}...</span>`;
+            oldError(...args); 
         };
 
-        // منع القائمة اليمنى لضمان عمل أزرار اللعبة
-        document.addEventListener('contextmenu', event => event.preventDefault());
+        import init from './menger_sponge_wgpu.js';
+
+        btn.onclick = async () => {
+            btn.style.display = 'none';
+            document.getElementById('status-title').innerText = "جاري التحميل...";
+            try {
+                console.log("بدء تحميل المحرك...");
+                await init();
+                console.log("✅ المحرك يعمل!");
+                document.getElementById('overlay').style.display = 'none';
+            } catch (e) {
+                console.error("فشل التشغيل: " + e.message);
+            }
+        };
     </script>
 </body>
 </html>
