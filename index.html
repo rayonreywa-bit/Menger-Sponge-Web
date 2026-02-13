@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menger Sponge WGPU</title>
+    <style>
+        body { margin: 0; background-color: #111; color: white; overflow: hidden; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="wasm-example"></div>
+    <script type="module">
+        import init from './pkg/menger_sponge_wgpu.js';
+        async function run() {
+            await init();
+        }
+        run();
+    </script>
+</body>
+</html>

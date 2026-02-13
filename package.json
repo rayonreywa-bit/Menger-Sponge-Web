@@ -1,0 +1,15 @@
+{
+  "name": "menger_sponge_wgpu",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "menger_sponge_wgpu_bg.wasm",
+    "menger_sponge_wgpu.js",
+    "menger_sponge_wgpu.d.ts"
+  ],
+  "main": "menger_sponge_wgpu.js",
+  "types": "menger_sponge_wgpu.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
