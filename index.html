@@ -3,45 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menger Sponge Debug</title>
+    <title>Menger Sponge Debugger</title>
     <style>
-        body { margin: 0; background-color: #000; color: white; overflow: hidden; }
-        canvas { display: block; width: 100vw; height: 100vh; }
-        #debug-console {
-            position: absolute; top: 0; left: 0; width: 100%; 
-            background: rgba(50, 0, 0, 0.8); color: #ffaaaa; 
-            font-family: monospace; padding: 20px; z-index: 9999;
-            pointer-events: none; white-space: pre-wrap;
+        body { margin: 0; background-color: #111; color: #fff; font-family: monospace; }
+        #log {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            padding: 20px; background: #000; overflow-y: auto; z-index: 1000;
+            line-height: 1.5; font-size: 14px;
         }
+        .error { color: #ff5555; font-weight: bold; }
+        .success { color: #55ff55; }
+        .info { color: #5555ff; }
     </style>
 </head>
 <body>
-    <div id="debug-console">جاري التحميل... (إذا بقيت هذه الرسالة طويلاً فهناك خطأ)</div>
-    
+    <div id="log">بدء عملية التشخيص...</div>
+
     <script type="module">
-        const debugEl = document.getElementById('debug-console');
-        function log(msg) { debugEl.innerText += "\n" + msg; }
-        function error(msg) { debugEl.innerText += "\n❌ خطأ: " + msg; debugEl.style.color = "red"; }
-
-        window.onerror = function(msg, url, line) {
-            error(msg + "\nفي الملف: " + url + "\nالسطر: " + line);
-        };
-
-        try {
-            log("محاولة استيراد ملف الجافاسكريبت...");
-            // تأكد أن هذا الاسم يطابق اسم الملف الموجود في مستودعك بالضبط
-            import init from './menger_sponge_wgpu.js';
-            
-            log("تم الاستيراد. جاري تشغيل WASM...");
-            await init();
-            
-            log("تم التشغيل بنجاح! إخفاء هذا النص...");
-            setTimeout(() => { debugEl.style.display = 'none'; }, 2000);
-            
-        } catch (e) {
-            error(e);
-            log("\n💡 تلميح: تأكد أن ملف menger_sponge_wgpu.js وملف .wasm موجودان بجانب index.html");
+        const logEl = document.getElementById('log');
+        function print(msg, cls = '') {
+            logEl.innerHTML += `<div class="${cls}">${msg}</div>`;
+            console.log(msg);
         }
+
+        async function start() {
+            print("1. فحص ملفات المشروع...", "info");
+            
+            try {
+                print("2. محاولة تحميل ملف menger_sponge_wgpu.js...");
+                // استخدام التحميل الديناميكي لتجنب تعليق المتصفح
+                const wasmModule = await import('./menger_sponge_wgpu.js');
+                print("✅ تم تحميل ملف الجافاسكريبت بنجاح", "success");
+
+                print("3. محاولة تشغيل محرك اللعبة (WASM)...");
+                await wasmModule.default();
+                print("✅ تم تشغيل WASM بنجاح! جاري إخفاء شاشة التشخيص...", "success");
+                
+                setTimeout(() => { logEl.style.display = 'none'; }, 2000);
+            } catch (err) {
+                print("<hr>", "");
+                print("❌ حدث خطأ أثناء التحميل:", "error");
+                print(err.message, "error");
+                print("<br>💡 تلميحات للإصلاح:", "info");
+                print("- تأكد أن اسم الملف في GitHub هو menger_sponge_wgpu.js (بدون حروف كبيرة)");
+                print("- تأكد من وجود ملف menger_sponge_wgpu_bg.wasm في نفس المكان");
+            }
+        }
+
+        start();
     </script>
 </body>
 </html>
