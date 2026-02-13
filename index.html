@@ -1,37 +1,54 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>WASM TEST V2</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menger Sponge - Interactive WASM</title>
     <style>
-        /* إذا رأيت اللون الأصفر، فأنت تشاهد النسخة الجديدة */
-        body { background: yellow; color: black; font-family: sans-serif; padding: 20px; }
-        #status { background: white; border: 2px solid black; padding: 10px; }
+        /* جعل اللوحة تغطي الشاشة بالكامل */
+        body { margin: 0; background-color: #000; overflow: hidden; }
+        canvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
+        
+        /* رسالة تحميل بسيطة تختفي عند البدء */
+        #loading-screen {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: white; font-family: sans-serif; text-align: center;
+            z-index: 10; transition: opacity 0.5s;
+        }
     </style>
 </head>
 <body>
-    <h1>اختبار تشغيل المحرك - نسخة 2.0</h1>
-    <div id="status">جاري التحميل...</div>
+    <div id="loading-screen">
+        <h2>جاري تشغيل محرك الرسوميات...</h2>
+        <p>استخدم WASD للتحرك والماوس للنظر</p>
+    </div>
+
+    <!-- هذا هو العنصر الذي تبحث عنه اللعبة لتضع فيه الكانفاس -->
+    <div id="wasm-example"></div>
 
     <script type="module">
-        const status = document.getElementById('status');
-        
-        async function init_game() {
+        import init from './menger_sponge_wgpu.js';
+
+        async function run() {
             try {
-                status.innerText = "1. محاولة استيراد الجافاسكريبت...";
-                const m = await import('./menger_sponge_wgpu.js');
+                // تشغيل المحرك
+                await init();
                 
-                status.innerText = "2. تم الاستيراد! جاري تشغيل WASM...";
-                await m.default();
+                // إخفاء شاشة التحميل بعد ثانية من التشغيل
+                setTimeout(() => {
+                    const loader = document.getElementById('loading-screen');
+                    if (loader) loader.style.opacity = '0';
+                    setTimeout(() => loader.remove(), 500);
+                }, 1000);
                 
-                status.innerText = "3. يعمل بنجاح!";
-                document.body.style.background = "#111"; // تحويل للخلفية المظلمة عند النجاح
             } catch (e) {
-                status.innerHTML = "<b style='color:red'>❌ خطأ:</b> " + e.message;
-                console.error(e);
+                console.error("Error:", e);
+                document.body.innerHTML = `<h1 style="color:red; padding:20px;">حدث خطأ: ${e.message}</h1>`;
             }
         }
 
-        init_game();
+        run();
     </script>
 </body>
 </html>
