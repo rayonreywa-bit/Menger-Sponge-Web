@@ -3,52 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menger Sponge - Interactive WASM</title>
+    <title>Menger Sponge - Click to Play</title>
     <style>
-        /* جعل اللوحة تغطي الشاشة بالكامل */
-        body { margin: 0; background-color: #000; overflow: hidden; }
-        canvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
+        body { margin: 0; background-color: #000; color: white; overflow: hidden; font-family: sans-serif; }
+        canvas { display: block; width: 100vw; height: 100vh; }
         
-        /* رسالة تحميل بسيطة تختفي عند البدء */
-        #loading-screen {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            color: white; font-family: sans-serif; text-align: center;
-            z-index: 10; transition: opacity 0.5s;
+        /* شاشة البداية */
+        #overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 100;
         }
+        button {
+            padding: 15px 30px; font-size: 20px; cursor: pointer;
+            background: #4CAF50; color: white; border: none; border-radius: 5px;
+        }
+        #error-log { color: #ff5555; margin-top: 20px; padding: 10px; white-space: pre-wrap; }
     </style>
 </head>
 <body>
-    <div id="loading-screen">
-        <h2>جاري تشغيل محرك الرسوميات...</h2>
-        <p>استخدم WASD للتحرك والماوس للنظر</p>
+    <div id="overlay">
+        <h1>Menger Sponge WASM</h1>
+        <button id="start-btn">إضغط هنا للبدء (Click to Start)</button>
+        <div id="error-log"></div>
     </div>
 
-    <!-- هذا هو العنصر الذي تبحث عنه اللعبة لتضع فيه الكانفاس -->
     <div id="wasm-example"></div>
 
     <script type="module">
         import init from './menger_sponge_wgpu.js';
 
-        async function run() {
+        const btn = document.getElementById('start-btn');
+        const overlay = document.getElementById('overlay');
+        const errorLog = document.getElementById('error-log');
+
+        btn.onclick = async () => {
+            btn.innerText = "جاري التحميل...";
             try {
                 // تشغيل المحرك
                 await init();
                 
-                // إخفاء شاشة التحميل بعد ثانية من التشغيل
-                setTimeout(() => {
-                    const loader = document.getElementById('loading-screen');
-                    if (loader) loader.style.opacity = '0';
-                    setTimeout(() => loader.remove(), 500);
-                }, 1000);
+                // إخفاء الشاشة بعد النجاح
+                overlay.style.display = 'none';
                 
+                // محاولة إعطاء التركيز للكانفاس فوراً
+                const canvas = document.querySelector('canvas');
+                if (canvas) {
+                    canvas.focus();
+                    console.log("Canvas focused!");
+                }
             } catch (e) {
-                console.error("Error:", e);
-                document.body.innerHTML = `<h1 style="color:red; padding:20px;">حدث خطأ: ${e.message}</h1>`;
+                console.error(e);
+                errorLog.innerText = "❌ خطأ في المحرك:\n" + e.message;
+                btn.innerText = "فشل التشغيل";
+                
+                if (e.message.includes("WebGPU")) {
+                    errorLog.innerText += "\n\n💡 متصفحك أو كرت الشاشة لا يدعم WebGPU حالياً.";
+                }
             }
-        }
+        };
 
-        run();
+        // منع القائمة اليمنى لضمان عمل أزرار اللعبة
+        document.addEventListener('contextmenu', event => event.preventDefault());
     </script>
 </body>
 </html>
