@@ -3,21 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menger Sponge WGPU</title>
+    <title>Menger Sponge Debug</title>
     <style>
-        body { margin: 0; background-color: #111; color: white; overflow: hidden; }
+        body { margin: 0; background-color: #000; color: white; overflow: hidden; }
         canvas { display: block; width: 100vw; height: 100vh; }
+        #debug-console {
+            position: absolute; top: 0; left: 0; width: 100%; 
+            background: rgba(50, 0, 0, 0.8); color: #ffaaaa; 
+            font-family: monospace; padding: 20px; z-index: 9999;
+            pointer-events: none; white-space: pre-wrap;
+        }
     </style>
 </head>
 <body>
-    <div id="wasm-example"></div>
+    <div id="debug-console">جاري التحميل... (إذا بقيت هذه الرسالة طويلاً فهناك خطأ)</div>
+    
     <script type="module">
-        import init from './menger_sponge_wgpu.js';
-        async function run() {
+        const debugEl = document.getElementById('debug-console');
+        function log(msg) { debugEl.innerText += "\n" + msg; }
+        function error(msg) { debugEl.innerText += "\n❌ خطأ: " + msg; debugEl.style.color = "red"; }
+
+        window.onerror = function(msg, url, line) {
+            error(msg + "\nفي الملف: " + url + "\nالسطر: " + line);
+        };
+
+        try {
+            log("محاولة استيراد ملف الجافاسكريبت...");
+            // تأكد أن هذا الاسم يطابق اسم الملف الموجود في مستودعك بالضبط
+            import init from './menger_sponge_wgpu.js';
+            
+            log("تم الاستيراد. جاري تشغيل WASM...");
             await init();
+            
+            log("تم التشغيل بنجاح! إخفاء هذا النص...");
+            setTimeout(() => { debugEl.style.display = 'none'; }, 2000);
+            
+        } catch (e) {
+            error(e);
+            log("\n💡 تلميح: تأكد أن ملف menger_sponge_wgpu.js وملف .wasm موجودان بجانب index.html");
         }
-        run();
     </script>
 </body>
-
 </html>
